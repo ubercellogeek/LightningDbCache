@@ -396,3 +396,11 @@ FodyWeavers.xsd
 
 # JetBrains Rider
 *.sln.iml
+
+# Unit Test Coverage Results
+lcov*
+lcov
+
+*.mdb
+
+coverlet/
