@@ -1,11 +1,9 @@
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 using System.Text;
-
 using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-
 using LightningDB;
 
 namespace LightningDbCache
@@ -20,20 +18,22 @@ namespace LightningDbCache
         private LightningDatabase? _expiryDatabase;
         private DateTime _lastExpirationScan;
         private bool _disposed;
+        private const string _cacheDatabaseName = "cache";
+        private const string _expiryDatabaseName = "expiry";
 
         public LightningDbCache(IOptions<LightningDbCacheOptions> optionsAccessor, ILoggerFactory loggerFactory)
         {
             _options = optionsAccessor.Value;
             _logger = loggerFactory.CreateLogger<LightningDbCache>();
 
-            if(_options.MapSize < _minMapSize) 
+            if (_options.MaxSize < _minMapSize)
             {
-                throw new ArgumentOutOfRangeException(nameof(optionsAccessor), $"MapSize must be greater than {_minMapSize}. Supplied value was: {_options.MapSize}.");
+                throw new ArgumentOutOfRangeException(nameof(optionsAccessor), $"MaxSize must be greater than {_minMapSize}. Supplied value was: {_options.MaxSize}.");
             }
 
-            _options.BasePath ??= Directory.GetCurrentDirectory();
+            _options.DataPath ??= Directory.GetCurrentDirectory();
             _lastExpirationScan = DateTime.UtcNow;
-            _environment = new LightningEnvironment(_options.BasePath, _options);
+            _environment = new LightningEnvironment(_options.DataPath, _options.EnvironmentConfiguration);
         }
 
         [ExcludeFromCodeCoverage]
@@ -74,16 +74,16 @@ namespace LightningDbCache
             ArgumentNullException.ThrowIfNullOrEmpty(key);
 
             CheckDisposed();
-            Open();
-            
+            EnsureOpened();
+
             var keyBytes = Encoding.UTF8.GetBytes(key);
-            using(var tran = _environment.BeginTransaction())
+            using (var tran = _environment.BeginTransaction())
             {
-                if(tran.TryGet(_cacheDatabase, keyBytes, out var dataBytes) && tran.TryGet(_expiryDatabase, keyBytes, out var expiryBytes))
+                if (tran.TryGet(_cacheDatabase, keyBytes, out var dataBytes) && tran.TryGet(_expiryDatabase, keyBytes, out var expiryBytes))
                 {
                     var expiry = new LightningDbCacheExpiry(expiryBytes);
 
-                    if(expiry.Expired)
+                    if (expiry.Expired)
                     {
                         StartScanForExpiredItemsIfNeeded(DateTime.UtcNow);
                         return null;
@@ -117,7 +117,7 @@ namespace LightningDbCache
 
         public Task RefreshAsync(string key, CancellationToken token = default)
         {
-            _ = Get(key);
+            Refresh(key);
             return Task.CompletedTask;
         }
 
@@ -126,11 +126,11 @@ namespace LightningDbCache
             ArgumentNullException.ThrowIfNull(key);
 
             CheckDisposed();
-            Open();
+            EnsureOpened();
 
             var keyBytes = Encoding.UTF8.GetBytes(key);
-            
-            using(var tran = _environment.BeginTransaction())
+
+            using (var tran = _environment.BeginTransaction())
             {
                 tran.Delete(_expiryDatabase, keyBytes);
                 tran.Delete(_cacheDatabase, keyBytes);
@@ -151,15 +151,15 @@ namespace LightningDbCache
             ArgumentNullException.ThrowIfNull(key);
 
             CheckDisposed();
-            Open();
-            
+            EnsureOpened();
+
             var keyBytes = Encoding.UTF8.GetBytes(key);
 
-            if(keyBytes.Length > 511) throw new ArgumentOutOfRangeException("Keys are limited to maximum length of 511 characters.");
+            if (keyBytes.Length > 511) throw new ArgumentOutOfRangeException("Keys are limited to maximum length of 511 characters.");
 
             var entry = new LightningDbCacheExpiry(options);
 
-            using(var tran = _environment.BeginTransaction())
+            using (var tran = _environment.BeginTransaction())
             {
                 tran.Put(_expiryDatabase, keyBytes, entry);
                 tran.Put(_cacheDatabase, keyBytes, value);
@@ -193,54 +193,54 @@ namespace LightningDbCache
 
         private void CleanupExpiredEntries()
         {
-            try
+            Debug("Starting cleanup of expired entries.");
+            using (var tran = _environment.BeginTransaction())
+            using (var cursor = tran.CreateCursor(_cacheDatabase))
             {
-                using(var tran = _environment.BeginTransaction())
-                using(var cursor = tran.CreateCursor(_cacheDatabase))
+                foreach (var entry in cursor.AsEnumerable())
                 {
-                    foreach (var entry in cursor.AsEnumerable())
+                    var key = entry.Item1.AsSpan();
+                    var value = entry.Item2.AsSpan();
+
+                    if (tran.TryGet(_expiryDatabase, key, out var expiryBytes))
                     {
-                        var key = entry.Item1.AsSpan();
-                        var value = entry.Item2.AsSpan();
+                        var expiry = (LightningDbCacheExpiry)expiryBytes;
 
-                        if(tran.TryGet(_expiryDatabase, key, out var expiryBytes))
+                        if (expiry.Expired)
                         {
-                             var expiry = (LightningDbCacheExpiry)expiryBytes;
-
-                            if(expiry.Expired)
-                            {
-                                var keyString = Encoding.UTF8.GetString(key);
-                                _logger.LogTrace("Cleaning up entry: {key}", keyString);
-                                cursor.Delete();
-                                tran.Delete(_expiryDatabase, key);
-                            }
+                            var keyString = Encoding.UTF8.GetString(key);
+                            cursor.Delete();
+                            tran.Delete(_expiryDatabase, key);
                         }
                     }
-                    tran.Commit();
                 }
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "error");
+                tran.Commit();
             }
         }
 
-        private void Open()
+        private void EnsureOpened()
         {
-            if(!_environment.IsOpened)
+            if (!_environment.IsOpened)
             {
                 _environment.Open();
-            
+
                 using var tran = _environment.BeginTransaction();
                 {
-                
-                    _cacheDatabase = tran.OpenDatabase("cache", new DatabaseConfiguration() { Flags = DatabaseOpenFlags.Create });
-                    _expiryDatabase = tran.OpenDatabase("expiry", new DatabaseConfiguration() { Flags = DatabaseOpenFlags.Create });
+                    _cacheDatabase = tran.OpenDatabase(_cacheDatabaseName, new DatabaseConfiguration() { Flags = DatabaseOpenFlags.Create });
+                    _expiryDatabase = tran.OpenDatabase(_expiryDatabaseName, new DatabaseConfiguration() { Flags = DatabaseOpenFlags.Create });
 
                     tran.Commit();
-                } 
+                }
             }
-            
+        }
+
+        [ExcludeFromCodeCoverage]
+        private void Debug(string? message, params object?[] args)
+        {
+            if (_logger.IsEnabled(LogLevel.Debug))
+            {
+                _logger.LogDebug(message, args);
+            }
         }
     }
 }

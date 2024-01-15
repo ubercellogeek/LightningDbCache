@@ -1,11 +1,7 @@
-using System.Reflection.Metadata;
-using FluentAssertions.Common;
 using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
-using Microsoft.VisualStudio.TestPlatform.ObjectModel.Engine.ClientProtocol;
-using NSubstitute;
 
 namespace LightningDbCache.Tests
 {
@@ -35,14 +31,14 @@ namespace LightningDbCache.Tests
         {
             // Arrange
             var configBuilder = new ConfigurationBuilder();
-            var mapSize = 18000;
-            var basePath = "test";
+            var maxSize = 18000;
+            var dataPath = "test";
             var expirationScanFrequency = 20;
 
             var configValues = new Dictionary<string, string?>
             {
-                {"MyCustomOptions:MapSize", mapSize.ToString()},
-                {"MyCustomOptions:BasePath", basePath},
+                {"MyCustomOptions:MaxSize", maxSize.ToString()},
+                {"MyCustomOptions:DataPath", dataPath},
                 {"MyCustomOptions:ExpirationScanFrequency", $"00:00:{expirationScanFrequency}"}
             };
 
@@ -60,8 +56,8 @@ namespace LightningDbCache.Tests
             
             // Assert
             Assert.NotNull(opts);
-            Assert.Equal(mapSize, opts.Value.MapSize);
-            Assert.Equal(basePath, opts.Value.BasePath);
+            Assert.Equal(maxSize, opts.Value.MaxSize);
+            Assert.Equal(dataPath, opts.Value.DataPath);
             Assert.Equal(expirationScanFrequency, opts.Value.ExpirationScanFrequency.TotalSeconds);
         }
 
@@ -70,14 +66,14 @@ namespace LightningDbCache.Tests
         {
             // Arrange
             var configBuilder = new ConfigurationBuilder();
-            var mapSize = 18000;
-            var basePath = "test";
+            var maxSize = 18000;
+            var dataPath = "test";
             var expirationScanFrequency = 20;
 
             var configValues = new Dictionary<string, string?>
             {
-                {"MyCustomOptions:MapSize", mapSize.ToString()},
-                {"MyCustomOptions:BasePath", basePath},
+                {"MyCustomOptions:MaxSize", maxSize.ToString()},
+                {"MyCustomOptions:DataPath", dataPath},
                 {"MyCustomOptions:ExpirationScanFrequency", $"00:00:{expirationScanFrequency}"}
             };
 
@@ -95,8 +91,8 @@ namespace LightningDbCache.Tests
             
             // Assert
             Assert.NotNull(opts);
-            Assert.Equal(mapSize, opts.Value.MapSize);
-            Assert.Equal(basePath, opts.Value.BasePath);
+            Assert.Equal(maxSize, opts.Value.MaxSize);
+            Assert.Equal(dataPath, opts.Value.DataPath);
             Assert.Equal(expirationScanFrequency, opts.Value.ExpirationScanFrequency.TotalSeconds);
         }
 
@@ -105,15 +101,15 @@ namespace LightningDbCache.Tests
         {
             // Arrange
             var configBuilder = new ConfigurationBuilder();
-            var mapSize = 18000;
-            var basePath = "test";
+            var maxSize = 18000;
+            var dataPath = "test";
             var expirationScanFrequency = 20;
             var configuration = configBuilder.Build();
             var services = new ServiceCollection();
 
             services.UseLightningDbCache((opts) => {
-                opts.BasePath = basePath;
-                opts.MapSize = mapSize;
+                opts.DataPath = dataPath;
+                opts.MaxSize = maxSize;
                 opts.ExpirationScanFrequency = TimeSpan.FromSeconds(expirationScanFrequency);
             });
 
@@ -125,8 +121,8 @@ namespace LightningDbCache.Tests
             
             // Assert
             Assert.NotNull(opts);
-            Assert.Equal(mapSize, opts.Value.MapSize);
-            Assert.Equal(basePath, opts.Value.BasePath);
+            Assert.Equal(maxSize, opts.Value.MaxSize);
+            Assert.Equal(dataPath, opts.Value.DataPath);
             Assert.Equal(expirationScanFrequency, opts.Value.ExpirationScanFrequency.TotalSeconds);
         }
     }

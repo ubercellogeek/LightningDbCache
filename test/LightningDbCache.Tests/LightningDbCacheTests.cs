@@ -1,14 +1,10 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
-using Castle.Core.Logging;
 using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
+using LightningDB;
 
 namespace LightningDbCache.Tests
 {
@@ -16,6 +12,10 @@ namespace LightningDbCache.Tests
     {
         private static ServiceProvider _provider;
         private const string _testDataFolder = "test-data";
+        private static LightningEnvironment _environment;
+        private static LightningDatabase _cacheDatabase;
+        private static LightningDatabase _expiryDatabase;
+
         static LightningDbCacheTests()
         {
             var dir = Directory.GetCurrentDirectory();
@@ -25,13 +25,25 @@ namespace LightningDbCache.Tests
             var configuration = configBuilder.Build();
             var services = new ServiceCollection();
 
-            services.UseLightningDbCache((opts) => {
-                opts.BasePath = basePath;
+            services.UseLightningDbCache((opts) =>
+            {
+                opts.DataPath = basePath;
                 opts.ExpirationScanFrequency = TimeSpan.FromSeconds(expirationScanFrequency);
             });
 
             _provider = services.BuildServiceProvider();
-            
+
+            _environment = new LightningEnvironment(_testDataFolder, new LightningDbCacheOptions() { DataPath = basePath, ExpirationScanFrequency = TimeSpan.FromSeconds(expirationScanFrequency) }.EnvironmentConfiguration);
+            _environment.Open();
+
+            using var tran = _environment.BeginTransaction();
+            {
+
+                _cacheDatabase = tran.OpenDatabase("cache", new DatabaseConfiguration() { Flags = DatabaseOpenFlags.Create });
+                _expiryDatabase = tran.OpenDatabase("expiry", new DatabaseConfiguration() { Flags = DatabaseOpenFlags.Create });
+
+                tran.Commit();
+            }
         }
 
         [Fact]
@@ -51,7 +63,7 @@ namespace LightningDbCache.Tests
         public void Should_Not_Allow_Keys_That_Are_Too_Long()
         {
             // Arrange
-            var key = new string('A',512);
+            var key = new string('A', 512);
             var cache = _provider.GetRequiredService<IDistributedCache>();
 
             // Act / Assert
@@ -62,7 +74,7 @@ namespace LightningDbCache.Tests
         public async Task Should_Not_Allow_Keys_That_Are_Too_Long_Async()
         {
             // Arrange
-            var key = new string('A',512);
+            var key = new string('A', 512);
             var cache = _provider.GetRequiredService<IDistributedCache>();
 
             // Act / Assert
@@ -117,7 +129,7 @@ namespace LightningDbCache.Tests
         public void Should_Not_Allow_Invalid_Map_Size_Configuration()
         {
             // Arrange
-            Assert.Throws<ArgumentOutOfRangeException>(() => new LightningDbCache(new LightningDbCacheOptions() { MapSize = 0 }, NullLoggerFactory.Instance));
+            Assert.Throws<ArgumentOutOfRangeException>(() => new LightningDbCache(new LightningDbCacheOptions() { MaxSize = 0 }, NullLoggerFactory.Instance));
         }
 
         [Fact]
@@ -194,14 +206,34 @@ namespace LightningDbCache.Tests
             var key = "refresh-key";
             var value = "test-value";
             var valueBytes = Encoding.UTF8.GetBytes(value);
+            LightningDbCacheExpiry? initialExpiry = null;
+            LightningDbCacheExpiry? refreshedExpiry = null;
 
             // Act
-            await cache.SetAsync(key, valueBytes, new DistributedCacheEntryOptions() { SlidingExpiration = TimeSpan.FromMilliseconds(3) });
+            await cache.SetAsync(key, valueBytes);
 
-            var result = await cache.GetAsync(key);
+            using (var tran = _environment.BeginTransaction())
+            {
+                if (tran.TryGet(_expiryDatabase, Encoding.UTF8.GetBytes(key), out var expiryBytes))
+                {
+                    initialExpiry = new LightningDbCacheExpiry(expiryBytes);
+                }
+            }
+
+            await cache.RefreshAsync(key);
+
+            using (var tran = _environment.BeginTransaction())
+            {
+                if (tran.TryGet(_expiryDatabase, Encoding.UTF8.GetBytes(key), out var expiryBytes))
+                {
+                    refreshedExpiry = new LightningDbCacheExpiry(expiryBytes);
+                }
+            }
 
             // Assert
-            Assert.Equal(valueBytes, result);
+            Assert.NotNull(initialExpiry);
+            Assert.NotNull(refreshedExpiry);
+            Assert.True(refreshedExpiry.LastAccessedUtcTicks > initialExpiry.LastAccessedUtcTicks);
         }
 
         [Fact]
@@ -216,7 +248,7 @@ namespace LightningDbCache.Tests
             // Act
             await cache.SetAsync(key, valueBytes);
             var result = await cache.GetAsync(key);
-            
+
             await cache.RemoveAsync(key);
             var deletedResult = await cache.GetAsync(key);
 
@@ -225,9 +257,27 @@ namespace LightningDbCache.Tests
             Assert.Null(deletedResult);
         }
 
-        public LightningDbCache BuildInstance()
+        [Fact]
+        public async Task Should_Cleanup_Expired_Entries()
         {
-             // Arrange
+            // Arrange
+            var cache = _provider.GetRequiredService<IDistributedCache>();
+            var key = "cleanup-expired";
+            var value = "test-value";
+            var valueBytes = Encoding.UTF8.GetBytes(value);
+
+            // Act
+            await cache.SetAsync(key, valueBytes, new DistributedCacheEntryOptions() { AbsoluteExpirationRelativeToNow = TimeSpan.FromSeconds(1) });
+            await Task.Delay(TimeSpan.FromSeconds(2));
+            var result = await cache.GetAsync(key);
+
+            // Assert
+            Assert.Null(result);
+        }
+
+        private LightningDbCache BuildInstance()
+        {
+            // Arrange
             var configBuilder = new ConfigurationBuilder();
             var mapSize = 18000;
             var basePath = "test";
@@ -235,9 +285,10 @@ namespace LightningDbCache.Tests
             var configuration = configBuilder.Build();
             var services = new ServiceCollection();
 
-            services.UseLightningDbCache((opts) => {
-                opts.BasePath = basePath;
-                opts.MapSize = mapSize;
+            services.UseLightningDbCache((opts) =>
+            {
+                opts.DataPath = basePath;
+                opts.MaxSize = mapSize;
                 opts.ExpirationScanFrequency = TimeSpan.FromSeconds(expirationScanFrequency);
             });
 
