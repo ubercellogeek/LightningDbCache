@@ -6,14 +6,15 @@ namespace LightningDbCache
     public class LightningDbCacheOptions : IOptions<LightningDbCacheOptions>
     {
         private readonly EnvironmentConfiguration _environmentConfiguration;
+        private const long _defaultMapSize = 1024 * 1024 * 200; // 200MB
 
         public LightningDbCacheOptions()
         {
             _environmentConfiguration = new EnvironmentConfiguration()
             {
-                MapSize = 200 * 1024 * 1024, // 200MB 
                 MaxDatabases = 2,
-                MaxReaders = 2048
+                MaxReaders = 2048,
+                MapSize = _defaultMapSize
             };
         }
 
@@ -23,7 +24,8 @@ namespace LightningDbCache
         public string? DataPath { get; set; }
 
         /// <summary>
-        /// The maximum size of the cache database.
+        /// The maximum size of the cache database. The default is 209715200 bytes (200MB). This should be set to a multiple of the underlying OS page size (usually 4096). 
+        /// NOTE: Reducing this size after data has been written to the database may result in data loss. Change the value of this value to meet your needs.
         /// </summary>
         public long MaxSize
         {

@@ -44,31 +44,7 @@ namespace LightningDbCache
             Dispose(true);
         }
 
-        /// <summary>
-        /// Dispose the cache.
-        /// </summary>
-        /// <param name="disposing">Dispose the object resources if true; otherwise, take no action.</param>
-        protected virtual void Dispose(bool disposing)
-        {
-            if (!_disposed)
-            {
-                if (disposing)
-                {
-                    _environment.Dispose();
-                    GC.SuppressFinalize(this);
-                }
-
-                _disposed = true;
-            }
-        }
-
-        private void CheckDisposed()
-        {
-            if (_disposed) Throw();
-
-            static void Throw() => throw new ObjectDisposedException(typeof(LightningDbCache).FullName);
-        }
-
+        /// <inheritdoc />
         public byte[]? Get(string key)
         {
             ArgumentNullException.ThrowIfNullOrEmpty(key);
@@ -104,23 +80,27 @@ namespace LightningDbCache
             }
         }
 
+        /// <inheritdoc />
         public Task<byte[]?> GetAsync(string key, CancellationToken token = default)
         {
             ArgumentNullException.ThrowIfNullOrEmpty(key);
             return Task.FromResult(Get(key));
         }
 
+        /// <inheritdoc />
         public void Refresh(string key)
         {
             _ = Get(key);
         }
 
+        /// <inheritdoc />
         public Task RefreshAsync(string key, CancellationToken token = default)
         {
             Refresh(key);
             return Task.CompletedTask;
         }
 
+        /// <inheritdoc />
         public void Remove(string key)
         {
             ArgumentNullException.ThrowIfNull(key);
@@ -140,12 +120,14 @@ namespace LightningDbCache
             StartScanForExpiredItemsIfNeeded(DateTime.UtcNow);
         }
 
+        /// <inheritdoc />
         public Task RemoveAsync(string key, CancellationToken token = default)
         {
             Remove(key);
             return Task.CompletedTask;
         }
 
+        /// <inheritdoc />
         public void Set(string key, byte[] value, DistributedCacheEntryOptions options)
         {
             ArgumentNullException.ThrowIfNull(key);
@@ -169,13 +151,38 @@ namespace LightningDbCache
             StartScanForExpiredItemsIfNeeded(DateTime.UtcNow);
         }
 
+        /// <inheritdoc />
         public Task SetAsync(string key, byte[] value, DistributedCacheEntryOptions options, CancellationToken token = default)
         {
             Set(key, value, options);
             return Task.CompletedTask;
         }
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        /// <summary>
+        /// Dispose the cache.
+        /// </summary>
+        /// <param name="disposing">Dispose the object resources if true; otherwise, take no action.</param>
+        protected virtual void Dispose(bool disposing)
+        {
+            if (!_disposed)
+            {
+                if (disposing)
+                {
+                    _environment.Dispose();
+                    GC.SuppressFinalize(this);
+                }
+
+                _disposed = true;
+            }
+        }
+
+        private void CheckDisposed()
+        {
+            if (_disposed) Throw();
+
+            static void Throw() => throw new ObjectDisposedException(typeof(LightningDbCache).FullName);
+        }
+
         private void StartScanForExpiredItemsIfNeeded(DateTime utcNow)
         {
             if (_options.ExpirationScanFrequency < utcNow - _lastExpirationScan)
@@ -216,6 +223,7 @@ namespace LightningDbCache
                 }
                 tran.Commit();
             }
+            Debug("Finished cleanup of expired entries.");
         }
 
         private void EnsureOpened()
