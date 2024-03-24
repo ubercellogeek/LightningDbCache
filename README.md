@@ -46,11 +46,11 @@ public class MyService
 
 The following configuration options are supported: 
 
-| Option | Description | Defaults To |
-| --- | --- | --- |
-| `DataPath` | The directory where the cache database files will be stored. | `Directory.GetCurrentDirectory()` |
-| `MaxSize` | The maximum size of the cache database in bytes. | `209715200` (200MB) |
-| `ExpirationScanFrequency` | The frequency at which the cache will be scanned for expired items. | `TimeSpan.FromMinutes(1)` |
+| Option | Datatype |Description | Default Value |
+| --- | --- |--- | --- |
+| `DataPath` | `string` | The directory where the cache database files will be stored. | `Directory.GetCurrentDirectory()` |
+| `MaxSize` | `long` | The maximum size of the cache database in bytes. | `209715200` (200MB) |
+| `ExpirationScanFrequency` | `Timespan` | The frequency at which the cache will be scanned for expired items. | `TimeSpan.FromMinutes(1)` |
 
 ### Examples
 
@@ -103,11 +103,11 @@ services.AddLightningDbCache(options =>
 
 ### Expiration
 
-This library fully implements IDistributedCache expiration options. While expired items will never be returned from the cache, they will not be removed from the backing store until the next time the cache is scanned for expired items. This is done to avoid the overhead of deleting items from the backing store on every cache access.
+This library fully implements `IDistributedCache` expiration options. While expired items will never be returned from the cache, they will not be removed from the backing store until the next time the cache is scanned for expired items. This is done to avoid the overhead of deleting items from the backing store on every cache access.
 
 ### Database Size
 
-LightningDb is a [memory-mapped](https://en.wikipedia.org/wiki/Lightning_Memory-Mapped_Database) database. This means that typically the consumed database size in memory will also be reflected in the size of files on disk. If you are using this library in a memory-constrained and/or disk space constrained environment, you should set the `MaxSize` option to a value that is appropriate for your application.
+LightningDb is a [memory-mapped](https://en.wikipedia.org/wiki/Lightning_Memory-Mapped_Database) database. This means that the consumed database size in memory will also be reflected in the size of files on disk and vice versa. If you are using this library in a memory-constrained and/or disk space constrained environment, you should set the `MaxSize` option to a value that is appropriate for your application.
 
 > **IMPORTANT:** The database file size on disk (and in memory) will grow up-to the `MaxSize` value. If the database size reaches the `MaxSize` value, new items will not be added to the cache until enough items are removed to bring the database size below the `MaxSize` value.
 
