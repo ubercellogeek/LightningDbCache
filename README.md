@@ -107,9 +107,7 @@ This library fully implements `IDistributedCache` expiration options. While expi
 
 ### Database Size
 
-LightningDb is a [memory-mapped](https://en.wikipedia.org/wiki/Lightning_Memory-Mapped_Database) database. This means that the consumed database size in memory will also be reflected in the size of files on disk and vice versa. If you are using this library in a memory-constrained and/or disk space constrained environment, you should set the `MaxSize` option to a value that is appropriate for your application.
-
-> **IMPORTANT:** The database file size on disk (and in memory) will grow up-to the `MaxSize` value. If the database size reaches the `MaxSize` value, new items will not be added to the cache until enough items are removed to bring the database size below the `MaxSize` value.
+The database file(s) on disk will grow up-to the `MaxSize` value. If the database size reaches the `MaxSize` value, new items will not be added to the cache until enough items are removed to bring the database size below the `MaxSize` value.
 
 ### Multithreading and Multiple Processes
 

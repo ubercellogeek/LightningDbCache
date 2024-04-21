@@ -12,6 +12,9 @@
     <PackageReadmeFile>README.md</PackageReadmeFile>
     <Icon>icon.png</Icon>
     <PackageTags>cache;caching;idistributedcache;persistance;key-value;lightning;lmdb</PackageTags>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <RepositoryUrl>https://github.com/ubercellogeek/LightningDbCache.git</RepositoryUrl>
+    <PackageProjectUrl>https://github.com/ubercellogeek/LightningDbCache</PackageProjectUrl>
   </PropertyGroup>
 
   <ItemGroup>
