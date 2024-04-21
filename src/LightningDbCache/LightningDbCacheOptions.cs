@@ -3,11 +3,17 @@ using LightningDB;
 
 namespace LightningDbCache
 {
+    /// <summary>
+    /// Represents the various configuration options for the underlying LightningDB cache.
+    /// </summary>
     public class LightningDbCacheOptions : IOptions<LightningDbCacheOptions>
     {
         private readonly EnvironmentConfiguration _environmentConfiguration;
         private const long _defaultMapSize = 1024 * 1024 * 200; // 200MB
 
+        /// <summary>
+        /// Initializes a new instance of the <see cref="LightningDbCacheOptions"/> class.
+        /// </summary>
         public LightningDbCacheOptions()
         {
             _environmentConfiguration = new EnvironmentConfiguration()
@@ -46,6 +52,9 @@ namespace LightningDbCache
         /// </summary>
         public TimeSpan ExpirationScanFrequency { get; set; } = TimeSpan.FromMinutes(1);
 
+        /// <summary>
+        /// Gets the value of the options.
+        /// </summary>
         public LightningDbCacheOptions Value => this;
     }
 }

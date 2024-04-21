@@ -1,8 +1,9 @@
 using Microsoft.Extensions.Caching.Distributed;
 
+
 namespace LightningDbCache
 {
-    public class LightningDbCacheExpiry
+    internal sealed class LightningDbCacheExpiry
     {
         private const long _notSet = -1;
         public long AbsoluteExpirationUtcTicks { get; private set; } = _notSet;
@@ -48,10 +49,9 @@ namespace LightningDbCache
                 throw new ArgumentOutOfRangeException(nameof(bytes), "Payload must be exactly 24 bytes long.");
             }
 
-            var spanBytes = new Span<byte>(bytes);
-            LastAccessedUtcTicks = BitConverter.ToInt64(spanBytes[..8]);
-            SlidingExpirationOffsetTicks = BitConverter.ToInt64(spanBytes[8..16]);
-            AbsoluteExpirationUtcTicks = BitConverter.ToInt64(spanBytes[16..]);  
+            LastAccessedUtcTicks = BitConverter.ToInt64(bytes, 0);
+            SlidingExpirationOffsetTicks = BitConverter.ToInt64(bytes, 8);
+            AbsoluteExpirationUtcTicks = BitConverter.ToInt64(bytes, 16);
         }
 
         internal void UpdateLastAccessed()
@@ -85,9 +85,9 @@ namespace LightningDbCache
         {
             var result = new byte[24];
 
-            Buffer.BlockCopy(BitConverter.GetBytes(LastAccessedUtcTicks), 0, result, 0, 8);
-            Buffer.BlockCopy(BitConverter.GetBytes(SlidingExpirationOffsetTicks), 0, result, 8, 8);
-            Buffer.BlockCopy(BitConverter.GetBytes(AbsoluteExpirationUtcTicks), 0, result, 16, 8);
+            Array.Copy(BitConverter.GetBytes(LastAccessedUtcTicks), 0, result, 0, 8);
+            Array.Copy(BitConverter.GetBytes(SlidingExpirationOffsetTicks), 0, result, 8, 8);
+            Array.Copy(BitConverter.GetBytes(AbsoluteExpirationUtcTicks), 0, result, 16, 8);
 
             return result;
         }

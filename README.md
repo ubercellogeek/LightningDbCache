@@ -1,7 +1,7 @@
 # LightningDbCache
 [![build](https://github.com/ubercellogeek/LightningDbCache/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/ubercellogeek/LightningDbCache/actions/workflows/ci.yml) [![Coverage Status](https://coveralls.io/repos/github/ubercellogeek/LightningDbCache/badge.svg?branch=main)](https://coveralls.io/github/ubercellogeek/LightningDbCache?branch=main)
 
-LightningDbCache is an implementation of [IDistributedCache](https://learn.microsoft.com/en-us/dotnet/api/microsoft.extensions.caching.distributed.idistributedcache) that uses LightningDb as a backing store. LightningDb is a fast, transactional, memory-mapped, key-value store with a very small footprint. LightningDbCache is made possible by leveraging the [Lightning.NET](https://github.com/CoreyKaylor/Lightning.NET) library to facilitate the interplay with LightningDb itself. 
+LightningDbCache is an implementation of [IDistributedCache](https://learn.microsoft.com/en-us/dotnet/api/microsoft.extensions.caching.distributed.idistributedcache) that uses LightningDb as a backing store. LightningDb is a fast, transactional, memory-mapped, key-value store with a very small footprint. LightningDbCache is made possible by leveraging the [Lightning.NET](https://github.com/CoreyKaylor/Lightning.NET) library to facilitate the interplay with LightningDb itself.
 
 ## Getting Started
 
@@ -103,7 +103,7 @@ services.AddLightningDbCache(options =>
 
 ### Expiration
 
-This library fully implements `IDistributedCache` expiration options. While expired items will never be returned from the cache, they will not be removed from the backing store until the next time the cache is scanned for expired items. This is done to avoid the overhead of deleting items from the backing store on every cache access.
+This library fully implements `IDistributedCache` expiration options. While expired items will never be returned from the cache, they will not be removed from the backing store until the next time the cache is scanned for expired items. This is done to avoid the overhead of removing items from the backing store on every cache access.
 
 ### Database Size
 
@@ -113,6 +113,6 @@ LightningDb is a [memory-mapped](https://en.wikipedia.org/wiki/Lightning_Memory-
 
 ### Multithreading and Multiple Processes
 
-Public methods on `LightningDbCache` are thread-safe. 
+Public members of `LightningDbCache` are thread-safe. 
 
 While it is possible, care should be taken when sharing a cache database between multiple processes. Some filesystems may not support memory-mapped files in a way that is compatible with LightningDb. For more in-depth reading on LightningDb's threading and multiple process support, see the [LightningDb Docs](http://www.lmdb.tech/doc/)

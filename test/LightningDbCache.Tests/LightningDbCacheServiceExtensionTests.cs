@@ -12,7 +12,9 @@ namespace LightningDbCache.Tests
         public void Should_Resolve_Options_For_Simple_Registration()
         {
             // Arrange
+            var configBuilder = new ConfigurationBuilder();
             var services = new ServiceCollection();
+            services.AddSingleton<IConfiguration>(configBuilder.Build());
             services.UseLightningDbCache();
             var provider = services.BuildServiceProvider();
             

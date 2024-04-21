@@ -1,5 +1,4 @@
 using System.Diagnostics.CodeAnalysis;
-using System.Runtime.CompilerServices;
 using System.Text;
 using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.Logging;
@@ -8,6 +7,9 @@ using LightningDB;
 
 namespace LightningDbCache
 {
+    /// <summary>
+    /// A distributed cache implementation that uses LightningDB as a backing store.
+    /// </summary>
     public class LightningDbCache : IDistributedCache, IDisposable
     {
         private const long _minMapSize = 16384;
@@ -21,6 +23,12 @@ namespace LightningDbCache
         private const string _cacheDatabaseName = "cache";
         private const string _expiryDatabaseName = "expiry";
 
+        /// <summary>
+        /// Initializes a new instance of <see cref="LightningDbCache"/>.
+        /// </summary>
+        /// <param name="optionsAccessor">The <see cref="IOptions{LightningDbCacheOptions}"/> to use as the configuration.</param>
+        /// <param name="loggerFactory">The <see cref="ILoggerFactory"/> to use to construct the logger.</param>
+        /// <exception cref="ArgumentOutOfRangeException">Thrown when the MaxSize value from the configuration is invalid.</exception>
         public LightningDbCache(IOptions<LightningDbCacheOptions> optionsAccessor, ILoggerFactory loggerFactory)
         {
             _options = optionsAccessor.Value;
@@ -36,9 +44,15 @@ namespace LightningDbCache
             _environment = new LightningEnvironment(_options.DataPath, _options.EnvironmentConfiguration);
         }
 
+        /// <summary>
+        /// Finalizes an instance of <see cref="LightningDbCache"/>.
+        /// </summary>
         [ExcludeFromCodeCoverage]
         ~LightningDbCache() => Dispose(false);
 
+        /// <summary>
+        /// Disposes the cache.
+        /// </summary>
         public void Dispose()
         {
             Dispose(true);
@@ -47,8 +61,6 @@ namespace LightningDbCache
         /// <inheritdoc />
         public byte[]? Get(string key)
         {
-            ArgumentNullException.ThrowIfNullOrEmpty(key);
-
             CheckDisposed();
             EnsureOpened();
 
@@ -83,7 +95,6 @@ namespace LightningDbCache
         /// <inheritdoc />
         public Task<byte[]?> GetAsync(string key, CancellationToken token = default)
         {
-            ArgumentNullException.ThrowIfNullOrEmpty(key);
             return Task.FromResult(Get(key));
         }
 
@@ -103,8 +114,6 @@ namespace LightningDbCache
         /// <inheritdoc />
         public void Remove(string key)
         {
-            ArgumentNullException.ThrowIfNull(key);
-
             CheckDisposed();
             EnsureOpened();
 
@@ -130,14 +139,17 @@ namespace LightningDbCache
         /// <inheritdoc />
         public void Set(string key, byte[] value, DistributedCacheEntryOptions options)
         {
-            ArgumentNullException.ThrowIfNull(key);
+            if(string.IsNullOrEmpty(key))
+            {
+                throw new ArgumentNullException(nameof(key));
+            }
 
             CheckDisposed();
             EnsureOpened();
 
             var keyBytes = Encoding.UTF8.GetBytes(key);
 
-            if (keyBytes.Length > 511) throw new ArgumentOutOfRangeException("Keys are limited to maximum length of 511 characters.");
+            if (keyBytes.Length > 511) throw new ArgumentOutOfRangeException(nameof(key), "Keys are limited to a maximum length of 511 characters.");
 
             var entry = new LightningDbCacheExpiry(options);
 
@@ -206,8 +218,9 @@ namespace LightningDbCache
             {
                 foreach (var entry in cursor.AsEnumerable())
                 {
-                    var key = entry.Item1.AsSpan();
-                    var value = entry.Item2.AsSpan();
+                    
+                    var key = entry.Item1.CopyToNewArray();
+                    var value = entry.Item2.CopyToNewArray();
 
                     if (tran.TryGet(_expiryDatabase, key, out var expiryBytes))
                     {

@@ -89,18 +89,7 @@ namespace LightningDbCache.Tests
             string key = default!;
 
             // Act / Assert
-            Assert.Throws<ArgumentNullException>(() => cache.Set(key, Array.Empty<byte>()));
-        }
-
-        [Fact]
-        public void Should_Not_Allow_Null_Keys_On_Get()
-        {
-            // Arrange
-            var cache = _provider.GetRequiredService<IDistributedCache>();
-            string key = default!;
-
-            // Act / Assert
-            Assert.Throws<ArgumentNullException>(() => cache.Get(key));
+            Assert.Throws<ArgumentNullException>(() => cache.Set(key, Array.Empty<byte>(), new()));
         }
 
         [Fact]
@@ -111,18 +100,7 @@ namespace LightningDbCache.Tests
             string key = default!;
 
             // Act / Assert
-            await Assert.ThrowsAsync<ArgumentNullException>(() => cache.SetAsync(key, Array.Empty<byte>()));
-        }
-
-        [Fact]
-        public async Task Should_Not_Allow_Null_Keys_On_GetAsync()
-        {
-            // Arrange
-            var cache = _provider.GetRequiredService<IDistributedCache>();
-            string key = default!;
-
-            // Act / Assert
-            await Assert.ThrowsAsync<ArgumentNullException>(() => cache.GetAsync(key));
+            await Assert.ThrowsAsync<ArgumentNullException>(() => cache.SetAsync(key, Array.Empty<byte>(), new()));
         }
 
         [Fact]
