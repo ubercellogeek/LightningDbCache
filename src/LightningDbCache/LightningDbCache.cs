@@ -155,9 +155,18 @@ namespace LightningDbCache
 
             using (var tran = _environment.BeginTransaction())
             {
-                tran.Put(_expiryDatabase, keyBytes, entry);
-                tran.Put(_cacheDatabase, keyBytes, value);
-                tran.Commit();
+                var expiryPutResult = tran.Put(_expiryDatabase, keyBytes, entry);
+                var dataPutResult = tran.Put(_cacheDatabase, keyBytes, value);
+
+                if(expiryPutResult != MDBResultCode.Success || dataPutResult != MDBResultCode.Success)
+                {
+                    Debug("Aborting transaction due to error: {0} - {1}", expiryPutResult, dataPutResult);
+                    tran.Abort();
+                }
+                else
+                {
+                    tran.Commit();
+                }
             }
 
             StartScanForExpiredItemsIfNeeded(DateTime.UtcNow);
