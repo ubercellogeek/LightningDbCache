@@ -5,14 +5,17 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <LangVersion>12</LangVersion>
+    <IncludeSymbols>true</IncludeSymbols>
+    <SymbolPackageFormat>snupkg</SymbolPackageFormat>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
 		<PackageId>LightningDbCache</PackageId>
 		<Description>An IDistributedCache implementation that uses LightningDb as a backing store</Description>
 		<Authors>Steve Strand</Authors>
     <PackageReadmeFile>README.md</PackageReadmeFile>
-    <Icon>icon.png</Icon>
+    <PackageIcon>icon.png</PackageIcon>
+    <PackageLicenseFile>LICENSE</PackageLicenseFile>
+    <PackageIconUrl>https://raw.githubusercontent.com/ubercellogeek/LightningDbCache/main/assets/icon.png</PackageIconUrl>
     <PackageTags>cache;caching;idistributedcache;persistance;key-value;lightning;lmdb</PackageTags>
-    <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <RepositoryUrl>https://github.com/ubercellogeek/LightningDbCache.git</RepositoryUrl>
     <PackageProjectUrl>https://github.com/ubercellogeek/LightningDbCache</PackageProjectUrl>
   </PropertyGroup>
@@ -30,6 +33,7 @@
   <ItemGroup>
     <None Include="../../README.md" Pack="true" PackagePath="\"/>
     <None Include="../../assets/icon.png" Pack="true" PackagePath="\"/>
+    <None Include="../../LICENSE" Pack="true" PackagePath="\"/>
   </ItemGroup>
 
   <ItemGroup>
