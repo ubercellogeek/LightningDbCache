@@ -1,5 +1,5 @@
 # LightningDbCache
-[![build](https://github.com/ubercellogeek/LightningDbCache/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/ubercellogeek/LightningDbCache/actions/workflows/ci.yml) [![Coverage Status](https://coveralls.io/repos/github/ubercellogeek/LightningDbCache/badge.svg?branch=main)](https://coveralls.io/github/ubercellogeek/LightningDbCache?branch=main)
+[![build](https://github.com/ubercellogeek/LightningDbCache/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/ubercellogeek/LightningDbCache/actions/workflows/ci.yml) [![Coverage Status](https://coveralls.io/repos/github/ubercellogeek/LightningDbCache/badge.svg?branch=main)](https://coveralls.io/github/ubercellogeek/LightningDbCache?branch=main) [![Nuget](https://img.shields.io/nuget/v/LightningDbCache?labelColor=blue&color=green)](https://www.nuget.org/packages/LightningDbCache/)
 
 LightningDbCache is an implementation of [IDistributedCache](https://learn.microsoft.com/en-us/dotnet/api/microsoft.extensions.caching.distributed.idistributedcache) that uses LightningDb as a backing store. LightningDb is a fast, transactional, memory-mapped, key-value store with a very small footprint. LightningDbCache is made possible by leveraging the [Lightning.NET](https://github.com/CoreyKaylor/Lightning.NET) library to facilitate the interplay with LightningDb itself.
 
