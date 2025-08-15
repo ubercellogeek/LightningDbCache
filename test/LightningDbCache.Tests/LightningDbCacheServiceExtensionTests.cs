@@ -15,7 +15,7 @@ namespace LightningDbCache.Tests
             var configBuilder = new ConfigurationBuilder();
             var services = new ServiceCollection();
             services.AddSingleton<IConfiguration>(configBuilder.Build());
-            services.UseLightningDbCache();
+            services.AddLightningDbCache();
             var provider = services.BuildServiceProvider();
             
             // Act
@@ -48,7 +48,7 @@ namespace LightningDbCache.Tests
 
             var services = new ServiceCollection();
             services.AddSingleton<IConfiguration>(configBuilder.Build());
-            services.UseLightningDbCache("MyCustomOptions");
+            services.AddLightningDbCache("MyCustomOptions");
 
             var provider = services.BuildServiceProvider();
 
@@ -83,7 +83,7 @@ namespace LightningDbCache.Tests
             var configuration = configBuilder.Build();
             var services = new ServiceCollection();
 
-            services.UseLightningDbCache(configuration.GetSection("MyCustomOptions"));
+            services.AddLightningDbCache(configuration.GetSection("MyCustomOptions"));
 
             var provider = services.BuildServiceProvider();
 
@@ -109,7 +109,7 @@ namespace LightningDbCache.Tests
             var configuration = configBuilder.Build();
             var services = new ServiceCollection();
 
-            services.UseLightningDbCache((opts) => {
+            services.AddLightningDbCache((opts) => {
                 opts.DataPath = dataPath;
                 opts.MaxSize = maxSize;
                 opts.ExpirationScanFrequency = TimeSpan.FromSeconds(expirationScanFrequency);

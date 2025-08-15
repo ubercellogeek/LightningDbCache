@@ -25,7 +25,7 @@ namespace LightningDbCache.Tests
             var configuration = configBuilder.Build();
             var services = new ServiceCollection();
 
-            services.UseLightningDbCache((opts) =>
+            services.AddLightningDbCache((opts) =>
             {
                 opts.DataPath = basePath;
                 opts.ExpirationScanFrequency = TimeSpan.FromSeconds(expirationScanFrequency);
@@ -263,7 +263,7 @@ namespace LightningDbCache.Tests
             var configuration = configBuilder.Build();
             var services = new ServiceCollection();
 
-            services.UseLightningDbCache((opts) =>
+            services.AddLightningDbCache((opts) =>
             {
                 opts.DataPath = basePath;
                 opts.MaxSize = mapSize;

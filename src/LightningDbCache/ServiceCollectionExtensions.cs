@@ -14,9 +14,9 @@ namespace LightningDbCache
         /// </summary>
         /// <param name="services">The service collection to register against.</param>
         /// <returns><see cref="IServiceCollection"/></returns>
-        public static IServiceCollection UseLightningDbCache(this IServiceCollection services)
+        public static IServiceCollection AddLightningDbCache(this IServiceCollection services)
         {
-            services.UseLightningDbCache(nameof(LightningDbCacheOptions));
+            services.AddLightningDbCache(nameof(LightningDbCacheOptions));
             return services;
         }
 
@@ -26,7 +26,7 @@ namespace LightningDbCache
         /// <param name="services">The service collection to register against.</param>
         /// <param name="namedConfigurationSection">The <see cref="IConfigurationSection"/> that contains the <see cref="LightningDbCacheOptions"/> to use as the configuration for the cache.</param>
         /// <returns><see cref="IServiceCollection"/></returns>
-        public static IServiceCollection UseLightningDbCache(this IServiceCollection services, IConfigurationSection namedConfigurationSection)
+        public static IServiceCollection AddLightningDbCache(this IServiceCollection services, IConfigurationSection namedConfigurationSection)
         {
             services.AddLogging();
             services.AddSingleton<IDistributedCache, LightningDbCache>();
@@ -40,7 +40,7 @@ namespace LightningDbCache
         /// <param name="services">The service collection to register against.</param>
         /// <param name="configSectionPath">The configuration section path that contains the <see cref="LightningDbCacheOptions"/> to use as the configuration for the cache.</param>
         /// <returns><see cref="IServiceCollection"/></returns>
-        public static IServiceCollection UseLightningDbCache(this IServiceCollection services, string configSectionPath)
+        public static IServiceCollection AddLightningDbCache(this IServiceCollection services, string configSectionPath)
         {
             services.AddLogging();
             services.AddSingleton<IDistributedCache, LightningDbCache>();
@@ -56,7 +56,7 @@ namespace LightningDbCache
         /// <param name="services">The service collection to register against.</param>
         /// <param name="setupAction">An action that provides the <see cref="LightningDbCacheOptions"/> to use as the configuration for the cache.</param>
         /// <returns><see cref="IServiceCollection"/></returns>
-        public static IServiceCollection UseLightningDbCache(this IServiceCollection services, Action<LightningDbCacheOptions> setupAction)
+        public static IServiceCollection AddLightningDbCache(this IServiceCollection services, Action<LightningDbCacheOptions> setupAction)
         {
             services.AddLogging();
             services.AddSingleton<IDistributedCache, LightningDbCache>();
